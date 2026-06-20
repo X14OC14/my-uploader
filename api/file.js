@@ -3,7 +3,6 @@ const axios = require('axios');
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
 module.exports = async (req, res) => {
-    // Jalankan CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET');
 
@@ -18,17 +17,22 @@ module.exports = async (req, res) => {
             return res.status(400).json({ status: false, message: 'Filename tidak disertakan.' });
         }
 
-        // Kita tempelkan kembali 'file_' sebelum meminta data ke server Telegram
-        const telegramFileUrl = `https://api.telegram.org/file/bot${BOT_TOKEN}/documents/file_${filename}`;
+        // SOLUSI FIX: Tentukan nama folder Telegram secara dinamis berdasarkan ekstensi file
+        let telegramFolder = 'documents';
+        if (filename.endsWith('.mp4') || filename.endsWith('.gif')) {
+            // Video pendek tanpa suara otomatis dikelompokkan ke animations oleh Telegram
+            telegramFolder = 'animations'; 
+        }
 
-        // Ambil file dari Telegram
+        // Jalur url sekarang fleksibel mengikuti jenis berkasnya
+        const telegramFileUrl = `https://api.telegram.org/file/bot${BOT_TOKEN}/${telegramFolder}/file_${filename}`;
+
         const response = await axios({
             method: 'get',
             url: telegramFileUrl,
             responseType: 'stream'
         });
 
-        // 1. Deteksi otomatis Content-Type berdasarkan ekstensi file-nya
         let contentType = response.headers['content-type'] || 'application/octet-stream';
         
         if (filename.endsWith('.jpg') || filename.endsWith('.jpeg')) contentType = 'image/jpeg';
@@ -38,12 +42,10 @@ module.exports = async (req, res) => {
         else if (filename.endsWith('.mp4')) contentType = 'video/mp4';
         else if (filename.endsWith('.mp3')) contentType = 'audio/mpeg';
 
-        // 2. BERSIHKAN HEADER LAMA & SET HEADER BARU YANG MURNI
-        res.removeHeader('Content-Disposition'); // Hapus paksaan download dari Telegram
+        res.removeHeader('Content-Disposition'); 
         res.setHeader('Content-Type', contentType);
-        res.setHeader('Content-Disposition', 'inline'); // Paksa tampil di browser
+        res.setHeader('Content-Disposition', 'inline'); 
         
-        // Alirkan data biner mentahnya saja
         response.data.pipe(res);
 
     } catch (err) {
