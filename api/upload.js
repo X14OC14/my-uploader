@@ -71,8 +71,9 @@ module.exports = async (req, res) => {
         const filePath = tgFileUrlResponse.data.result.file_path;
 
         // 6. Racik URL unduhan menggunakan domain kamu sendiri (REVERSE PROXY)
-        // Kita hapus string 'documents/' dari filePath bawaan Telegram agar parameter URL-nya rapi
-        const customUrl = `https://${req.headers.host}/file/${filePath.replace('documents/', '')}`;
+        // Kita bersihkan 'documents/' dan hilangkan teks 'file_' bawaan Telegram
+        const cleanFileName = filePath.replace('documents/', '').replace('file_', '');
+        const customUrl = `https://${req.headers.host}/file/${cleanFileName}`;
 
         // Kirim balik respon JSON manis ke client
         return res.status(200).json({
