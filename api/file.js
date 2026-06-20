@@ -18,7 +18,8 @@ module.exports = async (req, res) => {
             return res.status(400).json({ status: false, message: 'Filename tidak disertakan.' });
         }
 
-        const telegramFileUrl = `https://api.telegram.org/file/bot${BOT_TOKEN}/documents/${filename}`;
+        // Kita tempelkan kembali 'file_' sebelum meminta data ke server Telegram
+        const telegramFileUrl = `https://api.telegram.org/file/bot${BOT_TOKEN}/documents/file_${filename}`;
 
         // Ambil file dari Telegram
         const response = await axios({
