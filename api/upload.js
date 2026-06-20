@@ -70,15 +70,16 @@ module.exports = async (req, res) => {
         const tgFileUrlResponse = await axios.get(`https://api.telegram.org/bot${BOT_TOKEN}/getFile?file_id=${fileId}`);
         const filePath = tgFileUrlResponse.data.result.file_path;
 
-        // 6. Racik URL unduhan langsung (Direct Link)
-        const directDownloadUrl = `https://api.telegram.org/file/bot${BOT_TOKEN}/${filePath}`;
+        // 6. Racik URL unduhan menggunakan domain kamu sendiri (REVERSE PROXY)
+        // Kita hapus string 'documents/' dari filePath bawaan Telegram agar parameter URL-nya rapi
+        const customUrl = `https://${req.headers.host}/file/${filePath.replace('documents/', '')}`;
 
         // Kirim balik respon JSON manis ke client
         return res.status(200).json({
             status: true,
             creator: "Xiaocia",
             result: {
-                url: directDownloadUrl,
+                url: customUrl,
                 name: file.originalname,
                 size: file.size,
                 mimetype: file.mimetype
@@ -93,4 +94,3 @@ module.exports = async (req, res) => {
         });
     }
 };
-              
