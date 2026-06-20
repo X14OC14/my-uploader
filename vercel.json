@@ -1,4 +1,6 @@
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/api/$1" }]
+  "rewrites": [
+    { "source": "/upload", "destination": "/api/upload" },
+    { "source": "/file/:filename*", "destination": "/api/file?filename=:filename*" }
+  ]
 }
-
