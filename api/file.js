@@ -3,6 +3,7 @@ const axios = require('axios');
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
 module.exports = async (req, res) => {
+    // Jalankan CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET');
 
@@ -19,20 +20,29 @@ module.exports = async (req, res) => {
 
         const telegramFileUrl = `https://api.telegram.org/file/bot${BOT_TOKEN}/documents/${filename}`;
 
+        // Ambil file dari Telegram
         const response = await axios({
             method: 'get',
             url: telegramFileUrl,
             responseType: 'stream'
         });
 
-        // 1. Ambil content type asli (misal: image/png)
-        const contentType = response.headers['content-type'];
+        // 1. Deteksi otomatis Content-Type berdasarkan ekstensi file-nya
+        let contentType = response.headers['content-type'] || 'application/octet-stream';
+        
+        if (filename.endsWith('.jpg') || filename.endsWith('.jpeg')) contentType = 'image/jpeg';
+        else if (filename.endsWith('.png')) contentType = 'image/png';
+        else if (filename.endsWith('.webp')) contentType = 'image/webp';
+        else if (filename.endsWith('.gif')) contentType = 'image/gif';
+        else if (filename.endsWith('.mp4')) contentType = 'video/mp4';
+        else if (filename.endsWith('.mp3')) contentType = 'audio/mpeg';
+
+        // 2. BERSIHKAN HEADER LAMA & SET HEADER BARU YANG MURNI
+        res.removeHeader('Content-Disposition'); // Hapus paksaan download dari Telegram
         res.setHeader('Content-Type', contentType);
+        res.setHeader('Content-Disposition', 'inline'); // Paksa tampil di browser
         
-        // 2. PAKSA HEADER BIAR INLINE (Buka di browser, bukan download otomatis)
-        res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
-        
-        // Alirkan data filenya
+        // Alirkan data biner mentahnya saja
         response.data.pipe(res);
 
     } catch (err) {
